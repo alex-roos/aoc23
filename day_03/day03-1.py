@@ -88,7 +88,12 @@ parts_set = []
 absolute_total = 0
 
 print("Number of values:", len(values_dict.keys()))
-print("NUmber of symbols:", len(symbols_list))
+
+total_symbols = 0
+for i in symbols_list:
+    total_symbols += len(i)
+
+print("NUmber of symbols:", total_symbols)
 
 for _val in values_dict.keys():
     row_of_value = _val[1][0]
