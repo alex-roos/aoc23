@@ -1,12 +1,3 @@
-def list_to_val(_num_list):
-    return_val = 0
-
-    for i in range(len(_num_list)):
-        return_val += _num_list[-1] * 10 ** i
-        _num_list.pop()
-
-    return return_val
-
 def get_neighbors(row_index, col_index):
     neighbor_list = []
 
@@ -64,41 +55,47 @@ for line_num, _line in enumerate(original_data):
 
             if _token.isdigit():
                 # another value to add to 
-                number_builder.append(int(_token))
+                number_builder.append(_token)
                 curr_neighbors.update(get_neighbors(line_num, col_idx))
 
             else:
                 processing_number = False
 
-                values_dict[(list_to_val(number_builder), value_guid)] = curr_neighbors
+                values_dict[(int(''.join(number_builder)), value_guid)] = curr_neighbors
 
                 if not _token == '.':
                     symbols_list[line_num].append((line_num, col_idx))                
         else:
             if _token.isdigit():
-                number_builder = [int(_token)]
+                number_builder = [_token]
                 curr_neighbors = set()
                 curr_neighbors.update(get_neighbors(line_num, col_idx))
                 value_guid = (line_num, col_idx)
                 processing_number = True
             elif not _token == '.':
                 symbols_list[line_num].append((line_num, col_idx))
+        
+    if processing_number:
+        values_dict[(int(''.join(number_builder)), value_guid)] = curr_neighbors
 
 if DEBUG:
     for _val in values_dict.keys():
-        print(_val, "with neighbors", values_dict[_val])
+        _temp_list = list(values_dict[_val])
+        _temp_list.sort()
+        print(_val, "with neighbors", _temp_list)
 
 parts_set = []
+absolute_total = 0
 
 print("Number of values:", len(values_dict.keys()))
 print("NUmber of symbols:", len(symbols_list))
 
-
-
 for _val in values_dict.keys():
     row_of_value = _val[1][0]
 
-    print("Working on val in row:", row_of_value)
+    absolute_total += _val[0]
+
+    #print("Working on val in row:", row_of_value)
 
     potential_adj_symbols = []
     for _s in symbols_list[row_of_value]:
@@ -112,7 +109,7 @@ for _val in values_dict.keys():
 
     found_adj_symbol = False
 
-    print("Size of adj symbols:", len(potential_adj_symbols))
+    #print("Size of adj symbols:", len(potential_adj_symbols))
 
     for neighbor in values_dict[_val]:
         if neighbor in potential_adj_symbols:
@@ -121,5 +118,11 @@ for _val in values_dict.keys():
 
     if found_adj_symbol:
         parts_set.append(_val[0])
+        if row_of_value == 94:
+            print(_val[0])
+
+# for _l in symbols_list:
+#     print(_l)
 
 print("Answer:", sum(parts_set))
+print("All nums combined: ", absolute_total)
