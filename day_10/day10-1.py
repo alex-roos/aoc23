@@ -1,153 +1,205 @@
 DEBUG = False
+VERBOSE = True
 
 class PipeNode:
 
-    connected_pipes = set()
+    connected_pipe_locations = set()
     loc = (-1, -1)
+    dist_from_start = None
+    symbol = ' '
 
-    def __init__(self, row, col):
-        self.connected_pipes = set()
+    def __init__(self, row, col, sym = '.'):
+        self.connected_pipe_locations = set()
         self.loc = (row, col)
+        self.dist_from_start = None
+        self.symbol = sym
 
     def add_connection(self, _in):
-        self.connected_pipes.add(_in)
+        self.connected_pipe_locations.add(_in)
+    
+    def update_symbol(self, _sym):
+        self.symbol = _sym
 
 def update_connections(start_node, new_connect_locations):
-    for _connection in new_connect_locations:
-        if _connection[0] >= 0 and _connection[0] <= 139 and _connection[1] >= 0 and _connection[1] <= 139:
-            start_node.add_connection(pipe_dict[_connection])
+    for _connection_loc in new_connect_locations:
+        if _connection_loc[0] >= 0 and _connection_loc[0] <= 139 and _connection_loc[1] >= 0 and _connection_loc[1] <= 139:
+            PIPE_DICT[start_node].add_connection(_connection_loc)
 
-            pipe_dict[_connection].add_connection(start_node)
+            PIPE_DICT[_connection_loc].add_connection(start_node)
 
 class PipeTraverser:
 
-    current_node = None
+    current_node_loc = None
     depth = 0
-    visited_nodes = []
-    frontier = []
 
-    def __init__(self, _s, _d, _v, _f):
-        self.current_node = _s
-        self.depth = _d
-        self.visited_nodes = _v
-        self.frontier = _f
-
-    def replicate(self):
-        return PipeTraverser(self.current_node, self.depth, self.visited_nodes.copy(), self.frontier.copy())
-
+    def __init__(self, _start_node, _init_depth=1):
+        self.current_node_loc = _start_node
+        self.depth = _init_depth
 
 if DEBUG:
-    file = open("C:\\Users\\alexr\\git\\aoc23\\day_10\\day_10_input_test.txt", "r")
+    #file = open("C:\\Users\\alexr\\git\\aoc23\\day_10\\day_10_input_test.txt", "r")
+    file = open("C:\\Users\\alexr\\dev\\aoc23\\day_10\\day_10_input_test.txt", "r")
 else:
-    file = open("day_10_input.txt", "r")
+    file = open("C:\\Users\\alexr\\dev\\aoc23\\day_10\\day_10_input.txt", "r")
 original_data = file.read().strip().split("\n")
 file.close()
 
 count_rows = len(original_data)
 count_col = len(original_data[0])
 
-pipe_dict = dict()
+PIPE_DICT = dict()
 
-for _row in range(count_rows):
-    for _col in range(count_col):
-        pipe_dict[(_row, _col)] = PipeNode(_row, _col)
+for row_num, line in enumerate(original_data):
+    for col_num, _curr_token in enumerate(line):
+        PIPE_DICT[(row_num, col_num)] = PipeNode(row_num, col_num, _curr_token)
 
 curr_row = 0
 for line in original_data:
-    #print("Row", curr_row, ':', line)
-    for _col, _token in enumerate(line):
+    if curr_row == 0:
+        below_top_row = False
+    else:
+        below_top_row = True
+    if curr_row == len(original_data) - 1:
+        above_bottom_row = False
+    else:
+        above_bottom_row = True
 
+    for _col, _token in enumerate(line):
+        if _col == 0:
+            right_of_left_edge = False
+        else:
+            right_of_left_edge = True
+
+        if _col == len(line) - 1:
+            left_of_right_edge = False
+        else:
+            left_of_right_edge = True
+
+        # ['|', '-', 'L', 'J', '7', 'F']
         connections_to_add = []
         if _token == '|':
             # above and below
-            connections_to_add.append((curr_row - 1, _col))
-            connections_to_add.append((curr_row + 1, _col))
+            if below_top_row and PIPE_DICT[(curr_row - 1, _col)].symbol in ['|', '7', 'F', 'S']:
+                connections_to_add.append((curr_row - 1, _col))
+            if above_bottom_row and PIPE_DICT[(curr_row + 1, _col)].symbol in ['|', 'L', 'J', 'S']:
+                connections_to_add.append((curr_row + 1, _col))
         elif _token == '-':
             # left and right
-            connections_to_add.append((curr_row, _col - 1))
-            connections_to_add.append((curr_row, _col + 1))
+            if right_of_left_edge and PIPE_DICT[(curr_row, _col -1)].symbol in ['-', 'L','F', 'S']:
+                connections_to_add.append((curr_row, _col - 1))
+            if left_of_right_edge and PIPE_DICT[(curr_row, _col + 1)].symbol in ['-', 'J', '7', 'S']:
+                connections_to_add.append((curr_row, _col + 1))
         elif _token == 'L':
             # above and right
-            connections_to_add.append((curr_row - 1, _col))
-            connections_to_add.append((curr_row, _col + 1))
+            if below_top_row and PIPE_DICT[(curr_row - 1, _col)].symbol in ['|', '7', 'F', 'S']:
+                connections_to_add.append((curr_row - 1, _col))
+            if left_of_right_edge and PIPE_DICT[((curr_row, _col + 1))].symbol in ['-', 'J', '7', 'S']:
+                connections_to_add.append((curr_row, _col + 1))
         elif _token == 'J':
             # above and left
-            connections_to_add.append((curr_row - 1, _col))
-            connections_to_add.append((curr_row, _col - 1))
-        elif _token == '7':
+            if below_top_row and PIPE_DICT[(curr_row - 1, _col)].symbol in ['|', '7', 'F', 'S']:
+                connections_to_add.append((curr_row - 1, _col))
+            if right_of_left_edge and PIPE_DICT[(curr_row, _col -1)].symbol in ['-', 'L','F', 'S']:
+                connections_to_add.append((curr_row, _col - 1))
+        elif _token == '7': 
             # below and left
-            connections_to_add.append((curr_row + 1, _col))
-            connections_to_add.append((curr_row, _col - 1))
+            if above_bottom_row and PIPE_DICT[(curr_row + 1, _col)].symbol in ['|', 'L', 'J', 'S']:
+                connections_to_add.append((curr_row + 1, _col))
+            if right_of_left_edge and PIPE_DICT[(curr_row, _col -1)].symbol in ['-', 'L','F', 'S']:
+                connections_to_add.append((curr_row, _col - 1))
         elif _token == 'F':
             # below and right
-            connections_to_add.append((curr_row + 1, _col))
-            connections_to_add.append((curr_row, _col + 1))
+            if above_bottom_row and PIPE_DICT[(curr_row + 1, _col)].symbol in ['|', 'L', 'J', 'S']:
+                connections_to_add.append((curr_row + 1, _col))
+            if left_of_right_edge and PIPE_DICT[((curr_row, _col + 1))].symbol in ['-', 'J', '7', 'S']:
+                connections_to_add.append((curr_row, _col + 1))
         elif _token == 'S':
             start = (curr_row, _col)
+            PIPE_DICT[start].dist_from_start = 0
 
-        #print("Connections to add:", connections_to_add)
-
-        update_connections(pipe_dict[(curr_row, _col)], connections_to_add)    
+        update_connections((curr_row, _col), connections_to_add)    
 
     curr_row += 1
 
-#print("Start neighbors are:", pipe_dict[start].connected_pipes)
+for i in range(0,90,1):
+    print(list(PIPE_DICT[(1, i)].connected_pipe_locations), end=' ')
+print()
 
-# _r = 1
-# for _c in range(5):
-#     print("Row", _r, "Col", _c, "Neighbors:", [x.loc for x in pipe_dict[(_r, _c)].connected_pipes])
+if DEBUG:
+    node_frontier = list(PIPE_DICT[start].connected_pipe_locations)
+    left_path_traverser = PipeTraverser(node_frontier[0])
+    right_path_traverser = PipeTraverser(node_frontier[1])
+else:
+    start_path_1, start_path_2 = PIPE_DICT[start].connected_pipe_locations
+    if PIPE_DICT[start_path_1].loc[1] < PIPE_DICT[start_path_2].loc[1]:
+        left_path_traverser = PipeTraverser(start_path_1)
+        right_path_traverser = PipeTraverser(start_path_2)
+    else:
+        left_path_traverser = PipeTraverser(start_path_2)
+        right_path_traverser = PipeTraverser(start_path_1)
 
-result_map = [['.']*5]*5
+    traversers = [left_path_traverser, right_path_traverser]
 
-traversers = [PipeTraverser(pipe_dict[start], 0, [pipe_dict[start]], list(pipe_dict[start].connected_pipes))]
+final_paths = []
+for i in range(140):
+    final_paths.append(['.']*140)
 
-path_depths = []
-full_visited_set = set()
-full_visited_set.add(pipe_dict[start])
+left_terminated = False
+right_terminated = False
 
-while len(traversers) > 0:
-    next_depth_of_traversers = []
+final_paths[start[0]][start[1]] = PIPE_DICT[start].symbol
 
-    if traversers[0].depth % 100 == 0:
-        print("Current depth:", traversers[0].depth)
+while (not left_terminated or not right_terminated):
+    if VERBOSE:
+        print("Left depth:", left_path_traverser.depth)
+        print("Right depth:", right_path_traverser.depth, "at node", right_path_traverser.current_node_loc, PIPE_DICT[right_path_traverser.current_node_loc].symbol)
 
-    for _next_mover in traversers:
-        new_traversers = []
+    path_side = "left"
+    for _curr_traverser in traversers:
+        # updaate the distance for the node actually visited
+        PIPE_DICT[_curr_traverser.current_node_loc].dist_from_start = _curr_traverser.depth
 
-        if len(_next_mover.frontier) == 0:
-            path_depths.append(_next_mover.depth)
-        elif len(_next_mover.frontier) == 1:
-            new_traversers = [_next_mover]
-        elif len(_next_mover.frontier) > 1:
-            temp_frontier = _next_mover.frontier.copy()
+        _curr_frontier = PIPE_DICT[_curr_traverser.current_node_loc].connected_pipe_locations
+        curr_next_node_loc = None
 
-            new_traversers.append(_next_mover)
+        # look through connected nodes, see which does not have a distance of none
+        has_unvisited_node = False
+        for _next_frontier_node_loc in _curr_frontier:
+            if VERBOSE and path_side == "right":
+                print(_next_frontier_node_loc, ":", PIPE_DICT[_next_frontier_node_loc].symbol, "has dist", PIPE_DICT[_next_frontier_node_loc].dist_from_start)
+            if PIPE_DICT[_next_frontier_node_loc].dist_from_start == None:
+                has_unvisited_node = True
+                next_node_loc = _next_frontier_node_loc
 
-            for i in range(len(_next_mover.frontier) - 1):
-                new_traversers.append(_next_mover.replicate())
+        if has_unvisited_node:
+            _curr_traverser.depth += 1
+            _curr_traverser.current_node_loc = next_node_loc 
 
-            assert(len(temp_frontier) == len(new_traversers))
+            if path_side == "right":
+                final_paths[next_node_loc[0]][next_node_loc[1]] = PIPE_DICT[next_node_loc].symbol
+        else:
+            if path_side == "left":
+                left_terminated = True
+            elif path_side == "right":
+                right_terminated = True
 
-            for _idx in range(len(temp_frontier)):
-                new_traversers[_idx].frontier = [temp_frontier[_idx]]
+            if VERBOSE:
+                print("End of the", path_side, "line.")
 
-        for pipe_traversal in new_traversers:
-            pipe_traversal.depth += 1
-            #result_map[pipe_traversal.current_node.loc[0]][pipe_traversal.current_node.loc[1]] = pipe_traversal.depth
-            pipe_traversal.current_node = pipe_traversal.frontier[0]
-            pipe_traversal.visited_nodes.append(pipe_traversal.current_node)
-            full_visited_set.add(pipe_traversal.current_node)
-            
-            pipe_traversal.frontier = []
-            for _pipe in pipe_traversal.current_node.connected_pipes:
-                if _pipe not in pipe_traversal.visited_nodes and _pipe not in full_visited_set:
-                    pipe_traversal.frontier.append(_pipe)
-            
-            next_depth_of_traversers.append(pipe_traversal)
+        path_side = "right"
 
-    traversers = next_depth_of_traversers  
-                
-# for row in result_map:
-#     print(row)
 
-print("Final depths:", path_depths)
+write_file = open("C:\\Users\\alexr\\dev\\aoc23\\day_10\\debug_output.txt", "w")
+for row in final_paths:
+    temp_str = ""
+    for _i in row:
+        temp_str += _i
+
+    write_file.write(temp_str)
+    write_file.write('\n')
+
+write_file.close()
+
+for i in range(140):
+    print(PIPE_DICT[(88, i)].symbol, end='')
+print()
