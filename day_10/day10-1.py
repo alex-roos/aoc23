@@ -1,5 +1,5 @@
 DEBUG = False
-VERBOSE = True
+VERBOSE = False
 
 class PipeNode:
 
@@ -121,10 +121,6 @@ for line in original_data:
 
     curr_row += 1
 
-for i in range(0,90,1):
-    print(list(PIPE_DICT[(1, i)].connected_pipe_locations), end=' ')
-print()
-
 if DEBUG:
     node_frontier = list(PIPE_DICT[start].connected_pipe_locations)
     left_path_traverser = PipeTraverser(node_frontier[0])
@@ -175,8 +171,7 @@ while (not left_terminated or not right_terminated):
             _curr_traverser.depth += 1
             _curr_traverser.current_node_loc = next_node_loc 
 
-            if path_side == "right":
-                final_paths[next_node_loc[0]][next_node_loc[1]] = PIPE_DICT[next_node_loc].symbol
+            final_paths[next_node_loc[0]][next_node_loc[1]] = PIPE_DICT[next_node_loc].symbol
         else:
             if path_side == "left":
                 left_terminated = True
@@ -188,6 +183,8 @@ while (not left_terminated or not right_terminated):
 
         path_side = "right"
 
+print(left_path_traverser.depth)
+print(right_path_traverser.depth)
 
 write_file = open("C:\\Users\\alexr\\dev\\aoc23\\day_10\\debug_output.txt", "w")
 for row in final_paths:
@@ -200,6 +197,10 @@ for row in final_paths:
 
 write_file.close()
 
-for i in range(140):
-    print(PIPE_DICT[(88, i)].symbol, end='')
-print()
+# manual count for part 2 via output file, 247 is too low
+
+# to find outer tiles
+  # check if the tile is a '.', that means it is not part of the loop
+  # check if the '.' is either
+        # condition 1)  on the top row, bottow row, leftmost col, rightmost col -> if so, change '.' to 'O'
+        # condition 2) touching a 'O' tile [up, down, left, right]
